@@ -1,39 +1,22 @@
 # 🌐 Linux Network Namespaces & Enterprise Routing Lab
 
 **🛡️ Network & Network Security Projects, Part 1 (Proof of Concept)**
-👨‍💻 Author: Dharm J
+👨‍💻 Author: Dharm Mavani
 
 This lab builds a two-site enterprise network (HQ and Branch) inside a single Linux machine. It uses **network namespaces** as routers and clients, **veth pairs** as virtual cables, **static routing** between the sites and an **iptables firewall rule** that blocks and restores ping traffic.
 
 ---
 
-## 📑 Table of contents
-
-1. [Topology](#1--topology)
-2. [IP addressing plan](#2--ip-addressing-plan)
-3. [Requirements](#3--requirements)
-4. [Step 0: Install the tools](#-step-0-install-the-tools)
-5. [Step 1: Create the namespaces](#-step-1-create-the-namespaces)
-6. [Step 2: Connect namespaces with veth pairs](#-step-2-connect-namespaces-with-veth-pairs)
-7. [Step 3: Assign IP addresses and bring interfaces up](#-step-3-assign-ip-addresses-and-bring-interfaces-up)
-8. [Step 4: Enable IP forwarding and configure routes](#-step-4-enable-ip-forwarding-and-configure-routes)
-9. [Step 5: Test connectivity](#-step-5-test-connectivity)
-10. [Step 6: Firewall with iptables](#-step-6-firewall-with-iptables)
-11. [Results summary](#-results-summary)
-12. [Cleanup](#-cleanup)
-13. [Troubleshooting](#-troubleshooting)
-14. [What I learned](#-what-i-learned)
-
----
-
 ## 1. 🗺️ Topology
 
-```
-  HQ office                          WAN link                       Branch office
- ┌───────────┐   192.168.1.0/24   ┌───────────┐   10.0.0.0/30   ┌───────────────┐   192.168.2.0/24   ┌───────────────┐
- │ client-hq ├────────────────────┤ router-hq ├─────────────────┤ router-branch ├────────────────────┤ client-branch │
- └───────────┘                    └───────────┘                 └───────────────┘                    └───────────────┘
-  192.168.1.10                  192.168.1.1 | 10.0.0.1         10.0.0.2 | 192.168.2.1                  192.168.2.10
+```text
+┌───────────────┐   ┌───────────────┐   ┌───────────────┐   ┌───────────────┐
+│   client-hq   ├───┤   router-hq   ├───┤ router-branch ├───┤ client-branch │
+├───────────────┤   ├───────────────┤   ├───────────────┤   ├───────────────┤
+│ 192.168.1.10  │   │ 192.168.1.1   │   │ 10.0.0.2      │   │ 192.168.2.10  │
+│               │   │ 10.0.0.1      │   │ 192.168.2.1   │   │               │
+└───────────────┘   └───────────────┘   └───────────────┘   └───────────────┘
+  HQ LAN: 192.168.1.0/24   |   WAN: 10.0.0.0/30   |   Branch LAN: 192.168.2.0/24
 ```
 
 - **Namespace**: an isolated network stack that acts as a host or a router.

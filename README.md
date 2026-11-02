@@ -48,8 +48,6 @@ This lab builds a two-site enterprise network (HQ and Branch) inside a single Li
 sudo apt install iproute2 iptables iputils-ping -y
 ```
 
-![Install tools](screenshots/01-install-tools.png)
-
 ## 🧱 Step 1: Create the namespaces
 
 Four namespaces represent two routers and two clients.
@@ -66,8 +64,6 @@ Check that all four exist:
 ```bash
 sudo ip netns list
 ```
-
-![Create namespaces](screenshots/02-create-namespaces.png)
 
 ## 🔌 Step 2: Connect namespaces with veth pairs
 
@@ -89,8 +85,6 @@ sudo ip link add veth-c-branch type veth peer name veth-r-branch
 sudo ip link set veth-c-branch netns client-branch
 sudo ip link set veth-r-branch netns router-branch
 ```
-
-![Create veth pairs](screenshots/03-veth-links-and-hq-ip.png)
 
 ## 🏷️ Step 3: Assign IP addresses and bring interfaces up
 
@@ -117,8 +111,6 @@ sudo ip netns exec client-branch ip link set lo up
 sudo ip netns exec router-branch ip addr add 192.168.2.1/24 dev veth-r-branch
 sudo ip netns exec router-branch ip link set veth-r-branch up
 ```
-
-![Assign IP addresses](screenshots/04-assign-ip-wan-branch.png)
 
 Verify the addresses. Every interface should show `state UP` and the planned IP:
 
@@ -159,8 +151,6 @@ Expected output:
 192.168.2.0/24 via 10.0.0.2 dev veth-hq-wan
 ```
 
-![IP forwarding and routes](screenshots/05-forwarding-and-static-routes.png)
-
 ## 📡 Step 5: Test connectivity
 
 ```bash
@@ -179,8 +169,6 @@ sudo ip netns exec client-branch ping -c 4 192.168.1.10
 
 ✅ All pings should show `0% packet loss`. Pings that cross both routers show `ttl=62`, because each router subtracts 1 from the starting TTL of 64.
 
-![Ping tests](screenshots/06-ping-tests.png)
-
 ## 🔥 Step 6: Firewall with iptables
 
 ### 6.1 Baseline: no rules yet
@@ -196,8 +184,6 @@ INPUT, FORWARD and OUTPUT all show `policy ACCEPT` with no rules.
 ```bash
 sudo ip netns exec router-hq iptables -A FORWARD -s 192.168.1.0/24 -d 192.168.2.0/24 -p icmp --icmp-type echo-request -j DROP
 ```
-
-![Firewall baseline and DROP rule](screenshots/07-firewall-baseline-add-rule.png)
 
 ### 6.3 Test: the ping is blocked 🚫
 
@@ -215,8 +201,6 @@ sudo ip netns exec client-hq ping -c 4 192.168.2.10
 ```
 
 Result: `4 received, 0% packet loss`.
-
-![Firewall block and restore](screenshots/08-firewall-block-and-restore.png)
 
 ### Rule explained
 
